@@ -1,16 +1,13 @@
 #coding:utf-8
-version=1.0
+version=1.1
 print("Moteur version : "+str(version))
 
-class Perso:
-    def __init__(self):
-        self.tipe='perso'
-        self.nom=None
-        self.description=None
-        self.inventaire=[]
-        self.jeufini=False
-        self.vie=1
-        self.att=1
+def inp(txt):
+    if 1:
+        return raw_input(txt)
+    else:
+        return input(txt)
+
 
 class Evenement:
     def __init__(self):
@@ -48,7 +45,7 @@ class Evenement:
 class Lieu:
     def __init__(self):
         self.tipe='lieu'
-        self.nom=None
+        self.nom=''
         self.autre_noms=[]
         self.nord=None
         self.est=None
@@ -60,7 +57,7 @@ class Lieu:
         self.etat=[]
         self.evenements=[]
         self.deverouille=[]
-        self.description=None
+        self.description=''
         self.deja_ete=False
 
 class  Enemi:
@@ -78,7 +75,7 @@ class  Enemi:
 class Obj:
     def __init__(self):
         self.tipe='obj'
-        self.nom=None
+        self.nom=''
         self.autre_noms=[]
         self.etat=[]
         self.objs=[]
@@ -118,11 +115,56 @@ class Obj:
             if aa == p[0]:
                 print(self.nom+" dit : "+p[1])
 
+class Perso:
+    def __init__(self):
+        self.tipe='perso'
+        self.nom=''
+        self.description=None
+        self.inventaire=[]
+        self.jeufini=False
+        self.vie=1
+        self.att=1
+        self.lieu_actu=Lieu()
+
 def rol(no,lieu,perso):
     for o in lieu.objs+perso.inventaire:
         if no==o.nom or no in o.autre_noms:
             return o
     return None
+
+aide="""
+AIDE :
+    
+Ceci est un jeu textuel, pour y jouer vous devez taper des commandes.
+Voici les differents types de commandes:
+    -aller vers le nord : h,haut
+    -aller vers le sud : s,sud
+    -aller vers la gauche : g,gauche
+    -aller vers la droite : d,droite
+    -aller vers le haut : h,haut
+    -aller vers le bas : b,bas
+    -examiner un objet : x objet , examiner objet
+    -prendre un objet : prendre objet
+    -fouiller un objet : fouiller objet
+    -voir son inventaire : i,inventaire
+    -dire qqch a qqn : dire qqn qqch
+    -voir là où vous êtes : v,voir
+    -regarder qqch : r qqch , regarder qqch
+    -utiliser qqch sur qqch : u qchh sur qqch, utiliser qqch qqch
+    -parler de qqch a qqn : parler qqn qqch , dire qqn qqch
+    -quitter la partie : q,quitter
+    -sauvegarder : save , sauvegarder
+    -charger : load , charger
+    -donner qqch à qqn : donner dqch qqn
+    -poser qqch : poser qqch , jeter qqch
+    -deverouiller qqch(ou lieu) avec qqch : ouvrir qqch avec qqch , deverouiller lieu avec qqch
+    -voler qqn : voler qqn , piquer qqn
+    -aide : aide , help
+
+Pour gagner la partie , il vous faudra prendre un objet.
+"""
+print(aide)
+
 
 def commande(coms,perso,lieu_actu,eee):
     com_nord=['se déplacer vers le nord','aller nord','nord','n']
@@ -132,7 +174,7 @@ def commande(coms,perso,lieu_actu,eee):
     com_haut=["aller haut","haut","h"]
     com_ouest=['aller ouest','ouest','o']
     com_examiner=['examiner','x']
-    com_fouiller=['fouiller']
+    com_fouiller=['fouiller','ouvrir']
     com_prendre=['prendre']
     com_inventaire=['inventaire','i']
     com_dire=['dire','crier']
@@ -144,7 +186,7 @@ def commande(coms,perso,lieu_actu,eee):
     com_donner=["donner"]
     com_poser=['poser','jeter','lacher']
     com_deverouiller=['dévérouiller','déverouiller','deverouiller','ouvrir']
-    com_voler=['voler','dérober']
+    com_voler=['voler','dérober','piquer']
     coms_save=['save','sauvegarder']
     coms_load=['load','charger']
     coms_aide=['aide','help','guide']
@@ -153,7 +195,7 @@ def commande(coms,perso,lieu_actu,eee):
     elif com in coms_save: print("Vous sauvegardez votre partie.")
     elif com in coms_load: print("Vous chargez votre partie.")
     elif com in coms_aide:
-        txt="les commandes pour :\n"
+        print(aide)            
     elif com in com_nord:
         if lieu_actu.nord!=None:
             if 'vérouillé' in lieu_actu.nord.etat:
@@ -363,7 +405,7 @@ def commande(coms,perso,lieu_actu,eee):
         else: print("Vous ne pouvez pas faire ça.")
     else:
         print("Je n'ai pas compris.")
-    if eee: raw_input("")
+    if eee: inp("")
     return lieu_actu,perso
 
 def aff(lieu_actu,perso):
@@ -390,6 +432,38 @@ def aff(lieu_actu,perso):
             if e.act:
                 e.action(lieu_actu,perso)
             
+def main(perso,ef):
+    perso.hc=[] #historique commandes
+    while not perso.jeufini:
+        aff(perso.lieu_actu,perso)
+        com=inp("--> ")
+        coms=com.split()
+        if len(coms) >= 1:
+            perso.lieu_actu,perso=commande(coms,perso,perso.lieu_actu,True)
+            perso.hc.append(com)
+        com_save=['save','sauveguarder']
+        com_load=['load','charger']
+        if com in com_save:
+            txt=''
+            for h in perso.hc:
+                txt+=h
+                if perso.hc.index(h)<len(perso.hc)-1:txt+=" \n"
+            f=open("save","w")
+            f.write(txt)
+            f.close()
+        elif com in com_load:
+            if "save" in os.listdir("./"):
+                ch=open("save",'r').readlines()
+                perso.hc=[]
+                for c in ch:
+                    try:
+                        perso.lieu_actu,perso=commande(c.split(),perso,perso.lieu_actu,False)
+                        perso.hc.append(c)
+                    except: pass
+            else: print("vous ne pouvez pas charger votre partie.")
+        if ef in perso.inventaire:
+            perso.jeufini=True
+            break
 
 
 
